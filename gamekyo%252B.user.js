@@ -1,7 +1,7 @@
-// ==UserScript==
-// @name        Gamekyo Blog+ (angular)
+﻿// ==UserScript==
+// @name        Gamekyo+
 // @namespace   http://
-// @include     http://www.gamekyo.com/bloglist.html
+// @include     http://*gamekyo.com/bloglist.html
 // @version     1
 // @require     https://code.jquery.com/jquery-3.0.0.min.js
 // @require     https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.7/angular.js
