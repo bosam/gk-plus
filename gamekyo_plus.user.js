@@ -5,6 +5,8 @@
 // @version     1
 // @require     https://code.jquery.com/jquery-3.0.0.min.js
 // @require     https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.7/angular.js
+// @require     https://cdnjs.cloudflare.com/ajax/libs/angular-moment/0.10.3/angular-moment.min.js
+// @require     https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment-with-locales.min.js
 // @grant       none
 // ==/UserScript==
 
@@ -14,25 +16,32 @@ $('#column-1').attr('ng-controller', 'blogController');
 $('#column-1 .box-title-external').attr('ng-filters', '');
 $('#element-list').attr('ng-blogs', '');
 // Prepare filter
-$('.option-link a').attr('ng-click', 'loadNextPage($event)').attr('ng-class', "isLoadingNextPage ? 'loader' : ''");
+$('.box-container-external .element-title.white-font', '#column-1').html('Articles ({{ list.length }})');
+$('.option-link').attr('ng-lazy-loader', '');
 
 /////////////////////////////
 // ANGULAR INIT //
 ///////////////////////////
-var app = angular.module('gk', [])
-    .service('utils', [function() {
+var app = angular.module('gk', ['angularMoment'])
+    .run(function(amMoment) {
+        amMoment.changeLocale('fr');
+    })
+    .service('utils', 'moment', [function(moment) {
         this.generateJson = function(dom) {
             var jsonArticles = [];
 
             dom.each(function(i, val) {
                 var article = $(val);
 
+                var dateRaw = article.find('.details > .date').text(); //le 26/06/16 à 19h19
+                var moment = moment(dateRaw, '[le] DD/MM/YY [à] HH[h]mm');
+
                 jsonArticles.push({
                     title: article.find('.element-title div:first a').text(),
                     href: article.find('.element-title div a').attr('href'),
                     author: (article.find('.element-detail > a.member').text() || article.find('.element-detail > a.group').text()),
                     isGroup: (article.find('.element-detail > a.group').length === 1),
-                    date: article.find('.details > .date').text(),
+                    date: moment,
                     nbComs: parseInt(article.find('.details > a').text().match(/\(([\d])+\)/)[1], 10),
                 });
             });
@@ -53,8 +62,8 @@ var app = angular.module('gk', [])
             $('.element-detail > a.member, .element-detail > a.group', item)
                 .removeAttr('class').attr('ng-class', "item.isGroup ? 'group' : 'member'")
                 .html('{{ item.author }}');
-            $('.details > .date', item)
-                .html('{{ item.date }}');
+            $('.details > .date', item).attr('am-time-ago', 'item.date').empty();
+                // .html('{{ item.date }}');
             $('.details > a', item)
                 .html('{{ item.nbComs }}');
 
@@ -63,7 +72,11 @@ var app = angular.module('gk', [])
     }])
     .directive('ngFilters', function() {
         return {
-            template: '<div class="box-title-external">Filters: <input type="checkbox" ng-click="filterByGroup()" /></div>'
+            template: ' \
+            <div class="box-title-external"> \
+            <label for="onlyGroups">Afficher seulement les groupes</label> \
+            <input id="onlyGroups" type="checkbox" ng-click="filterByGroup()" /> \
+            </div>'
         };
     })
     .directive('ngBlogs', ['$compile', 'utils', function($compile, utils) {
@@ -79,10 +92,38 @@ var app = angular.module('gk', [])
             }
         };
     }])
-    .controller('blogController', ['$scope', '$http', 'utils', function ($scope, $http, utils) {
-        $scope.isLoadingNextPage = false;
+    .directive('ngLazyLoader', ['$window', '$http', 'utils', function($window, $http, utils) {
+        return {
+            restrict: 'A',
+            link: function(scope, elem, attr) {
+                scope.isLazyLoading = false;
+                scope.condition = function() {
+                    return ($window.innerHeight + $window.scrollY) >= document.body.offsetHeight;
+                };
+
+                var a = elem.find('a:last');
+                scope.nextLink = a.attr('href');
+
+                angular.element($window).bind('scroll', function() {
+                    if (scope.condition() && !scope.isLazyLoading) {
+                        scope.isLazyLoading = true;
+
+                        $http.get(scope.nextLink).then(function(response){
+                            var newDom = angular.element(response.data);
+                            var filtered = newDom.find('#element-list > div[id^="element-"]');
+
+                            $.merge(scope.list, utils.generateJson(filtered));
+                            
+                            scope.nextLink = $('.option-link a:last', newDom).attr('href');
+                            scope.isLazyLoading = false;
+                        }, function(){});
+                    }
+                });
+            }
+        };
+    }])
+    .controller('blogController', ['$scope', function ($scope) {
         $scope.filters = {};
-        $scope.linkToNextPage = angular.element('.option-link a:last').attr('href');
 
         $scope.filterByGroup = function() {
             if (!('isGroup' in $scope.filters)) {
@@ -92,18 +133,6 @@ var app = angular.module('gk', [])
             }
 
             $scope.filters = {};
-        };
-
-        $scope.loadNextPage = function($event) {
-            $event.preventDefault();
-
-            $http.get($scope.linkToNextPage).then(function(response){
-                var newDom = $(response.data);
-                var filtered = newDom.find('#column-1 div[id^="element-"]:not([id="element-list"])');
-
-                $.merge($scope.list, utils.generateJson(filtered));
-                $scope.linkToNextPage = newDom.find('.option-link a:last').attr('href');
-            }, function(){});
         };
     }]
 );
