@@ -5,7 +5,6 @@
 // @version     1
 // @require     https://code.jquery.com/jquery-3.0.0.min.js
 // @require     https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.7/angular.js
-// @require     https://cdnjs.cloudflare.com/ajax/libs/angular-moment/0.10.3/angular-moment.min.js
 // @require     https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment-with-locales.min.js
 // @grant       none
 // ==/UserScript==
@@ -22,11 +21,8 @@ $('.option-link').attr('ng-lazy-loader', '');
 /////////////////////////////
 // ANGULAR INIT //
 ///////////////////////////
-var app = angular.module('gk', ['angularMoment'])
-    .run(function(amMoment) {
-        amMoment.changeLocale('fr');
-    })
-    .service('utils', 'moment', [function(moment) {
+var app = angular.module('gk', [])
+    .service('utils', [function() {
         this.generateJson = function(dom) {
             var jsonArticles = [];
 
@@ -34,14 +30,14 @@ var app = angular.module('gk', ['angularMoment'])
                 var article = $(val);
 
                 var dateRaw = article.find('.details > .date').text(); //le 26/06/16 à 19h19
-                var moment = moment(dateRaw, '[le] DD/MM/YY [à] HH[h]mm');
+                var momentDay = moment(dateRaw, '[le] DD/MM/YY [à] HH[h]mm');
 
                 jsonArticles.push({
                     title: article.find('.element-title div:first a').text(),
                     href: article.find('.element-title div a').attr('href'),
                     author: (article.find('.element-detail > a.member').text() || article.find('.element-detail > a.group').text()),
                     isGroup: (article.find('.element-detail > a.group').length === 1),
-                    date: moment,
+                    date: momentDay,
                     nbComs: parseInt(article.find('.details > a').text().match(/\(([\d])+\)/)[1], 10),
                 });
             });
@@ -62,8 +58,9 @@ var app = angular.module('gk', ['angularMoment'])
             $('.element-detail > a.member, .element-detail > a.group', item)
                 .removeAttr('class').attr('ng-class', "item.isGroup ? 'group' : 'member'")
                 .html('{{ item.author }}');
-            $('.details > .date', item).attr('am-time-ago', 'item.date').empty();
-                // .html('{{ item.date }}');
+            $('.details > .date', item)
+                .attr('title', '{{ item.date.format("dddd, Do MMMM YYYY à hh:mm") }}')
+                .html('{{ item.date.fromNow() }}');
             $('.details > a', item)
                 .html('{{ item.nbComs }}');
 
@@ -124,6 +121,7 @@ var app = angular.module('gk', ['angularMoment'])
     }])
     .controller('blogController', ['$scope', function ($scope) {
         $scope.filters = {};
+        moment.locale('fr');
 
         $scope.filterByGroup = function() {
             if (!('isGroup' in $scope.filters)) {
