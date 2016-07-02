@@ -18,6 +18,10 @@ $('#element-list').attr('ng-blogs', '');
 $('.box-container-external .element-title.white-font', '#column-1').html('Articles ({{ list.length }})');
 $('.option-link').attr('ng-lazy-loader', '');
 
+// Remove ads and adjust width
+$('#column-2').remove();
+$('#column-1').width($('#header').width() - $('#column-1').width() + 111);
+
 /////////////////////////////
 // ANGULAR INIT //
 ///////////////////////////
