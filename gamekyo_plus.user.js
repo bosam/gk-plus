@@ -59,8 +59,9 @@ var app = angular.module('gk', [])
                 .removeAttr('class').attr('ng-class', "item.isGroup ? 'group' : 'member'")
                 .html('{{ item.author }}');
             $('.details > .date', item)
-                .attr('title', '{{ item.date.format("dddd, Do MMMM YYYY à hh:mm") }}')
-                .html('{{ item.date.fromNow() }}');
+                .attr('title', '{{ item.date.format("dddd, Do MMMM YYYY à hh[h]mm") }}')
+                .attr('ng-time-ago', '')
+                .attr('data-date', 'item.date');
             $('.details > a', item)
                 .html('{{ item.nbComs }}');
 
@@ -86,6 +87,21 @@ var app = angular.module('gk', [])
             link: function(scope, elem, attr, ctrl) {
                 elem.html(utils.buildTemplate());
                 $compile(elem.contents())(scope);
+            }
+        };
+    }])
+    .directive('ngTimeAgo', ['$window', function($window) {
+        return {
+            restrict: 'A',
+            replace: true,
+            scope: {
+                date: '=date'
+            },
+            template: '<time>{{ date.fromNow() }}</time>',
+            link: function(scope, elem, attr) {
+                $window.setInterval(function () {
+                    angular.element(elem).text(scope.date.fromNow());
+                }, 15 * 1000);
             }
         };
     }])
