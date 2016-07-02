@@ -20,8 +20,7 @@ $('#column-1 .box-title-external').attr('ng-filters', '');
 $('#element-list').attr('ng-blogs', '');
 // Prepare filter
 $('.box-container-external .element-title.white-font', '#column-1').html('Articles ({{ list.length }})');
-var loaderImg = $('<img alt="loading..." />').attr('ng-class', "{ 'ng-animate-shim': !isLazyLoading }").attr('src', loader);
-$('.option-link').attr('ng-lazy-loader', '').prepend(loaderImg);
+$('.option-link').attr('ng-lazy-loader', '');
 
 // Remove ads and adjust width
 $('#column-2').remove();
@@ -76,6 +75,12 @@ var app = angular.module('gk', [])
 
             return item[0].outerHTML;
         };
+
+        this.createLoader = function() {
+            return angular.element('<img alt="loading..." />')
+                          .attr('ng-class', "{ 'ng-animate-shim': !isLazyLoading }")
+                          .attr('src', loader);
+        }
     }])
     .directive('ngFilters', function() {
         return {
@@ -114,18 +119,21 @@ var app = angular.module('gk', [])
             }
         };
     }])
-    .directive('ngLazyLoader', ['$window', '$http', 'utils', function($window, $http, utils) {
+    .directive('ngLazyLoader', ['$compile', '$window', '$http', 'utils', function($compile, $window, $http, utils) {
         return {
             restrict: 'A',
+            controller: function($scope, $element) {
+                $scope.nextLink = $element.find('a:last').attr('href');
+            },
             link: function(scope, elem, attr) {
+                // Inject template now
+                elem.html(utils.createLoader());
+                $compile(elem.contents())(scope);
+
                 scope.isLazyLoading = false;
                 scope.condition = function() {
                     return ($window.innerHeight + $window.scrollY) >= document.body.offsetHeight;
                 };
-
-                var a = elem.find('a:last');
-                scope.nextLink = a.attr('href');
-                a.remove();
 
                 angular.element($window).bind('scroll', function() {
                     if (scope.condition() && !scope.isLazyLoading) {
