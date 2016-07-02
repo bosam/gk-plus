@@ -20,7 +20,7 @@ $('.option-link').attr('ng-lazy-loader', '');
 
 // Remove ads and adjust width
 $('#column-2').remove();
-$('#column-1').width($('#header').width() - $('#column-1').width() + 111);
+$('#column-1').css('width', '72%');
 
 /////////////////////////////
 // ANGULAR INIT //
