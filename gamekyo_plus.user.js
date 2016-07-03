@@ -41,6 +41,7 @@ var app = angular.module('gk', [])
                 var momentDay = moment(dateRaw, '[le] DD/MM/YY [à] HH[h]mm');
 
                 jsonArticles.push({
+                    id: momentDay.format('X'),
                     title: article.find('.element-title div:first a').text(),
                     href: article.find('.element-title div a').attr('href'),
                     author: (article.find('.element-detail > a.member').text() || article.find('.element-detail > a.group').text()),
@@ -71,7 +72,7 @@ var app = angular.module('gk', [])
                 .attr('ng-time-ago', '')
                 .attr('data-date', 'item.date');
             $('.details > a', item)
-                .html('{{ item.nbComs }}');
+                .html('commentaires [ {{ item.nbComs }} ]');
 
             return item[0].outerHTML;
         };
@@ -80,7 +81,29 @@ var app = angular.module('gk', [])
             return angular.element('<img alt="loading..." />')
                           .attr('ng-class', "{ 'ng-animate-shim': !isLazyLoading }")
                           .attr('src', loader);
-        }
+        },
+
+        this.mergeNoDuplicates = function(oldList, newAdd) {
+            $.merge(oldList, newAdd);
+
+            var existingIDs = [];
+            oldList = $.grep(oldList, function(v) {
+                if ($.inArray(v.id, existingIDs) !== -1) {
+                    return false;
+                }
+                else {
+                    existingIDs.push(v.id);
+                    return true;
+                }
+            });
+
+            oldList.sort(function(a, b) {
+                var akey = a.id, bkey = b.id;
+                if (akey > bkey) return 1;
+                if (akey < bkey) return -1;
+                return 0;
+            });
+        };
     }])
     .directive('ngFilters', function() {
         return {
@@ -143,7 +166,7 @@ var app = angular.module('gk', [])
                             var newDom = angular.element(response.data);
                             var filtered = newDom.find('#element-list > div[id^="element-"]');
 
-                            $.merge(scope.list, utils.generateJson(filtered));
+                            utils.mergeNoDuplicates(scope.list, utils.generateJson(filtered));
                             
                             scope.nextLink = $('.option-link a:last', newDom).attr('href');
                             scope.isLazyLoading = false;
