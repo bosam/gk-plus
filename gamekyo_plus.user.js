@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name        Gamekyo+
 // @namespace   http://
-// @include     http://*gamekyo.com/bloglist.html
+// @include     *gamekyo.com/bloglist.html
 // @version     0.3
 // @updateURL   https://github.com/bosam/gk-plus/raw/angular/gamekyo_plus.user.js
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js
