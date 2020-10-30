@@ -3,8 +3,8 @@
 // @namespace      http://
 // @version        2.11
 // @description	   Améliorer la navigation du site et de la partie blog de Gamekyo.com
-// @include        http://www.gamekyo.com/*
-// @include        http://gamekyo.com/*
+// @include        https://www.gamekyo.com/*
+// @include        https://gamekyo.com/*
 // @updateURL      http://userscripts.org/scripts/source/81321.user.js
 // @icon           http://uppix.net/d/5/f/2ad2b2d6176e66661e4ab9fabb470.png
 // @author         bosam
